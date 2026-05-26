@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตารางกำหนดการประชุม - อำเภอบ้านเหลื่อม</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2744; --navy-light: #243158;
+    --gold: #c9a84c; --gold-light: #e8c97a;
+    --cream: #f8f5ee; --white: #ffffff;
+    --gray: #8a8fa8; --gray-light: #eef0f5;
+    --red: #c0392b; --green: #27ae60;
+    --shadow: 0 4px 24px rgba(26,39,68,0.10);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sarabun', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  header { background: var(--navy); color: var(--white); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(26,39,68,0.18); }
+  .header-inner { display: flex; align-items: center; gap: 16px; padding: 14px 28px; border-bottom: 2px solid var(--gold); }
+  .header-emblem { width: 44px; height: 44px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .header-title h1 { font-family: 'Noto Serif Thai', serif; font-size: 17px; font-weight: 700; }
+  .header-title p { font-size: 12px; color: var(--gold-light); margin-top: 1px; }
+  .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+  .sync-status { font-size: 12px; color: var(--gray-light); display: flex; align-items: center; gap: 6px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .nav-tabs { display: flex; background: var(--navy-light); padding: 0 28px; }
+  .nav-tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; }
+  .nav-tab:hover { color: var(--gold-light); }
+  .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 500; border: none; cursor: pointer; transition: all 0.18s; }
+  .btn-primary { background: var(--gold); color: var(--navy); }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--navy); color: var(--navy); }
+  .btn-outline:hover { background: var(--navy); color: var(--white); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-group { display: flex; gap: 8px; margin-left: auto; align-items: center; flex-wrap: wrap; }
+  select, input[type="date"], input[type="time"], input[type="text"] { font-family: 'Sarabun', sans-serif; font-size: 13px; padding: 8px 12px; border: 1.5px solid #d0d5e8; border-radius: 8px; background: var(--white); color: var(--navy); outline: none; }
+  select:focus, input:focus { border-color: var(--gold); }
+
+  .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card { background: var(--white); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); border-left: 4px solid var(--gold); display: flex; align-items: center; gap: 12px; }
+  .stat-icon { font-size: 24px; }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .stat-label { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+  .table-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .table-header { background: var(--navy); color: var(--white); padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: var(--gray-light); }
+  th { padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #dde1ef; white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid #f0f2f8; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8f9ff; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-upcoming { background: #e8f4ff; color: #1565c0; }
+  .badge-today { background: #fff3cd; color: #856404; }
+  .badge-past { background: #f0f0f0; color: #888; }
+  .badge-soon { background: #fde8e8; color: var(--red); }
+  .action-btns { display: flex; gap: 6px; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,39,68,0.55); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 560px; box-shadow: 0 20px 60px rgba(26,39,68,0.25); overflow: hidden; animation: slideUp 0.22s ease; }
+  @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-head { background: var(--navy); color: var(--white); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; border-bottom: 2px solid var(--gold); }
+  .modal-close { background: none; border: none; color: var(--gold-light); font-size: 22px; cursor: pointer; }
+  .modal-body { padding: 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1/-1; }
+  label { font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-control { font-family: 'Sarabun', sans-serif; font-size: 14px; padding: 10px 13px; border: 1.5px solid #d0d5e8; border-radius: 8px; background: var(--white); color: var(--navy); outline: none; transition: border-color 0.15s; width: 100%; }
+  .form-control:focus { border-color: var(--gold); }
+  textarea.form-control { resize: vertical; min-height: 72px; }
+  .modal-foot { padding: 16px 24px; border-top: 1px solid var(--gray-light); display: flex; justify-content: flex-end; gap: 10px; background: #fafbff; }
+
+  .bell-badge { position: relative; display: inline-block; }
+  .bell-count { position: absolute; top: -5px; right: -6px; background: var(--red); color: #fff; font-size: 9px; border-radius: 50%; width: 16px; height: 16px; display: none; align-items: center; justify-content: center; font-weight: 700; }
+  .notif-panel { display: none; position: fixed; top: 80px; right: 20px; width: 320px; background: var(--white); border-radius: 12px; box-shadow: 0 8px 32px rgba(26,39,68,0.18); z-index: 500; overflow: hidden; }
+  .notif-panel.open { display: block; }
+  .notif-head { background: var(--navy); color: var(--white); padding: 12px 16px; font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); }
+  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--gray-light); font-size: 13px; }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item .notif-title { font-weight: 600; color: var(--navy); }
+  .notif-item .notif-sub { color: var(--gray); margin-top: 2px; font-size: 12px; }
+  .notif-empty { padding: 20px; text-align: center; color: var(--gray); font-size: 13px; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-head { text-align: center; font-size: 12px; font-weight: 600; color: var(--gray); padding: 8px 0; }
+  .cal-cell { min-height: 80px; border-radius: 8px; background: var(--white); padding: 6px; font-size: 12px; border: 1px solid #eef0f5; }
+  .cal-cell.other-month { background: #f8f9fc; color: #ccc; }
+  .cal-cell.today-cell { border-color: var(--gold); border-width: 2px; }
+  .cal-date { font-weight: 600; color: var(--navy); margin-bottom: 4px; font-size: 13px; }
+  .cal-event { background: var(--navy); color: var(--gold); border-radius: 4px; padding: 2px 5px; margin-bottom: 2px; font-size: 10px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-nav-title { font-size: 16px; font-weight: 700; color: var(--navy); }
+
+  .loading-spinner { display: none; text-align: center; padding: 40px; color: var(--gray); font-size: 15px; }
+  .loading-spinner.show { display: block; }
+
+  @media print {
+    header,.toolbar,.stats-bar,.action-btns,.modal-overlay,.notif-panel { display:none!important; }
+    .table-card { box-shadow:none; }
+    body { background:#fff; }
+    .main { padding:0; }
+  }
+  @media (max-width:700px) {
+    .stats-bar { grid-template-columns:repeat(2,1fr); }
+    .form-grid { grid-template-columns:1fr; }
+    .header-inner { padding:12px 14px; }
+    .main { padding:16px 10px; }
+    .header-title h1 { font-size:14px; }
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(6), td:nth-child(6) { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-emblem">🏛️</div>
+    <div class="header-title">
+      <h1>ระบบตารางกำหนดการประชุม</h1>
+      <p>อำเภอบ้านเหลื่อม · จังหวัดนครราชสีมา</p>
+    </div>
+    <div class="header-actions">
+      <div class="sync-status">
+        <div class="sync-dot syncing" id="syncDot"></div>
+        <span id="syncText">กำลังเชื่อมต่อ...</span>
+      </div>
+      <div class="bell-badge" onclick="toggleNotif()">
+        <button class="btn btn-outline" style="padding:8px 12px;font-size:18px;">🔔</button>
+        <span class="bell-count" id="bellCount">0</span>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()">+ เพิ่มการประชุม</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('list',this)">📋 รายการ</div>
+    <div class="nav-tab" onclick="switchTab('calendar',this)">📅 ปฏิทิน</div>
+  </div>
+</header>
+
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-head">
+    <span>🔔 การแจ้งเตือน</span>
+    <button onclick="toggleNotif()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;">×</button>
+  </div>
+  <div id="notifList"></div>
+</div>
+
+<div class="main">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><span class="stat-icon">📋</span><div><div class="stat-num" id="s1">—</div><div class="stat-label">ทั้งหมด</div></div></div>
+    <div class="stat-card"><span class="stat-icon">📅</span><div><div class="stat-num" id="s2">—</div><div class="stat-label">ที่ยังมาถึง</div></div></div>
+    <div class="stat-card" style="border-left-color:#e67e22;"><span class="stat-icon">🔔</span><div><div class="stat-num" id="s3">—</div><div class="stat-label">วันนี้</div></div></div>
+    <div class="stat-card" style="border-left-color:#27ae60;"><span class="stat-icon">🗓️</span><div><div class="stat-num" id="s4">—</div><div class="stat-label">เดือนนี้</div></div></div>
+  </div>
+
+  <div id="listView">
+    <div class="toolbar">
+      <button class="btn btn-outline" onclick="window.print()">🖨️ พิมพ์</button>
+      <button class="btn btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+      <div class="filter-group">
+        <select id="filterMonth" onchange="renderTable()"><option value="">-- ทุกเดือน --</option></select>
+        <input type="date" id="filterDate" onchange="renderTable()">
+        <button class="btn btn-sm btn-outline" onclick="clearFilter()">✕ ล้าง</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        📋 ตารางกำหนดการประชุม
+        <span id="rowCount" style="margin-left:auto;font-size:12px;color:var(--gold-light);font-weight:400;"></span>
+      </div>
+      <div class="loading-spinner show" id="loadingSpinner">⏳ กำลังโหลดข้อมูล...</div>
+      <div style="overflow-x:auto;" id="tableWrap" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>วัน/เวลา</th><th>เรื่องการประชุม</th>
+              <th>สถานที่</th><th>ผู้เชิญ / หน่วยงาน</th>
+              <th>หมายเหตุ</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <div class="empty-icon">📭</div>
+          <p>ยังไม่มีรายการประชุม<br><small>กดปุ่ม "+ เพิ่มการประชุม" เพื่อเริ่มต้น</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="calendarView" style="display:none;">
+    <div class="cal-nav">
+      <button class="btn btn-outline btn-sm" onclick="changeMonth(-1)">◀ ก่อนหน้า</button>
+      <span class="cal-nav-title" id="calTitle"></span>
+      <button class="btn btn-outline btn-sm" onclick="changeMonth(1)">ถัดไป ▶</button>
+    </div>
+    <div class="table-card" style="padding:16px;">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="modalTitle">➕ เพิ่มกำหนดการประชุม</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>วันที่ประชุม *</label>
+          <input type="date" id="fDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>เวลาเริ่ม</label>
+          <input type="time" id="fTime" class="form-control" value="09:00">
+        </div>
+        <div class="form-group full">
+          <label>เรื่องการประชุม *</label>
+          <input type="text" id="fTitle" class="form-control" placeholder="ระบุหัวข้อการประชุม">
+        </div>
+        <div class="form-group">
+          <label>สถานที่</label>
+          <input type="text" id="fPlace" class="form-control" placeholder="เช่น ห้องประชุมอำเภอ">
+        </div>
+        <div class="form-group">
+          <label>ผู้เชิญ / หน่วยงาน</label>
+          <input type="text" id="fOrg" class="form-control" placeholder="เช่น ที่ว่าการอำเภอ">
+        </div>
+        <div class="form-group full">
+          <label>หมายเหตุ</label>
+          <textarea id="fNote" class="form-control" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>แจ้งเตือนล่วงหน้า</label>
+          <select id="fRemind" class="form-control">
+            <option value="0">ไม่แจ้งเตือน</option>
+            <option value="1">1 วัน</option>
+            <option value="3" selected>3 วัน</option>
+            <option value="7">7 วัน</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveMeeting()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  databaseURL: "https://meeting-baanluam-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const meetingsRef = ref(db, 'meetings');
+
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DAYS_TH = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+let meetings = [];
+let editId = null;
+let currentView = 'list';
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
+
+// === REALTIME LISTENER ===
+onValue(meetingsRef, (snapshot) => {
+  const data = snapshot.val();
+  meetings = data ? Object.entries(data).map(([id, v]) => ({ id, ...v })) : [];
+  renderTable();
+  if (currentView === 'calendar') renderCalendar();
+  setSynced();
+  document.getElementById('loadingSpinner').classList.remove('show');
+  document.getElementById('tableWrap').style.display = '';
+}, (error) => {
+  setError();
+});
+
+function setSynced() {
+  const now = new Date();
+  const hhmm = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('syncDot').className = 'sync-dot';
+  document.getElementById('syncText').textContent = 'ซิงค์แล้ว ' + hhmm;
+}
+function setSyncing() {
+  document.getElementById('syncDot').className = 'sync-dot syncing';
+  document.getElementById('syncText').textContent = 'กำลังบันทึก...';
+}
+function setError() {
+  document.getElementById('syncDot').className = 'sync-dot error';
+  document.getElementById('syncText').textContent = 'เชื่อมต่อไม่ได้';
+}
+
+// === HELPERS ===
+function getStatus(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + 'T12:00:00'); d.setHours(0,0,0,0);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff < 0) return { label: 'ผ่านแล้ว', cls: 'badge-past' };
+  if (diff === 0) return { label: 'วันนี้', cls: 'badge-today' };
+  if (diff <= 3) return { label: 'อีก ' + diff + ' วัน', cls: 'badge-soon' };
+  return { label: 'อีก ' + diff + ' วัน', cls: 'badge-upcoming' };
+}
+
+function fmtDate(dateStr, timeStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr + 'T12:00:00');
+  const be = d.getFullYear() + 543;
+  const dow = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][d.getDay()];
+  return 'วัน' + dow + 'ที่ ' + d.getDate() + ' ' + MONTHS_TH[d.getMonth()] + ' ' + be + (timeStr ? ' เวลา ' + timeStr + ' น.' : '');
+}
+
+function getFiltered() {
+  const fm = document.getElementById('filterMonth').value;
+  const fd = document.getElementById('filterDate').value;
+  return meetings.filter(m => {
+    if (fm && !m.date.startsWith(fm)) return false;
+    if (fd && m.date !== fd) return false;
+    return true;
+  }).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+}
+
+// === RENDER ===
+function renderTable() {
+  const data = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('rowCount').textContent = data.length + ' รายการ';
+  if (data.length === 0) { tbody.innerHTML = ''; empty.style.display = ''; }
+  else {
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map((m,i) => {
+      const st = getStatus(m.date);
+      return '<tr>' +
+        '<td style="color:var(--gray);font-size:12px;">' + (i+1) + '</td>' +
+        '<td style="white-space:nowrap;">' + fmtDate(m.date, m.time) + '</td>' +
+        '<td style="font-weight:600;">' + (m.title||'') + '</td>' +
+        '<td>' + (m.place||'-') + '</td>' +
+        '<td>' + (m.org||'-') + '</td>' +
+        '<td style="color:var(--gray);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (m.note||'') + '">' + (m.note||'-') + '</td>' +
+        '<td><span class="badge ' + st.cls + '">' + st.label + '</span></td>' +
+        '<td><div class="action-btns">' +
+          '<button class="btn btn-sm btn-outline" onclick="window._edit(\'' + m.id + '\')">✏️</button>' +
+          '<button class="btn btn-sm btn-danger" onclick="window._del(\'' + m.id + '\',\'' + (m.title||'').replace(/'/g,"\\'") + '\')">🗑️</button>' +
+        '</div></td></tr>';
+    }).join('');
+  }
+  renderStats();
+  updateNotifBadge();
+  populateMonths();
+}
+
+function renderStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const total = meetings.length;
+  const upcoming = meetings.filter(m => { const d = new Date(m.date+'T12:00:00'); d.setHours(0,0,0,0); return d >= today; }).length;
+  const todayN = meetings.filter(m => { const d = new Date(m.date+'T12:00:00'); d.setHours(0,0,0,0); return d.getTime()===today.getTime(); }).length;
+  const thisMonth = meetings.filter(m => m.date && m.date.startsWith(new Date().toISOString().slice(0,7))).length;
+  document.getElementById('s1').textContent = total;
+  document.getElementById('s2').textContent = upcoming;
+  document.getElementById('s3').textContent = todayN;
+  document.getElementById('s4').textContent = thisMonth;
+}
+
+function populateMonths() {
+  const sel = document.getElementById('filterMonth');
+  const cur = sel.value;
+  const months = [...new Set(meetings.map(m => m.date ? m.date.slice(0,7) : '').filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">-- ทุกเดือน --</option>' +
+    months.map(ym => {
+      const [y,mo] = ym.split('-');
+      return '<option value="'+ym+'"'+(ym===cur?' selected':'')+'>'+MONTHS_TH[parseInt(mo)-1]+' '+(parseInt(y)+543)+'</option>';
+    }).join('');
+}
+
+window.clearFilter = function() {
+  document.getElementById('filterMonth').value = '';
+  document.getElementById('filterDate').value = '';
+  renderTable();
+};
+
+// === NOTIFICATIONS ===
+function getNotifications() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return meetings.filter(m => {
+    if (!m.remind || m.remind == 0) return false;
+    const d = new Date(m.date+'T12:00:00'); d.setHours(0,0,0,0);
+    const diff = Math.round((d - today) / 86400000);
+    return diff >= 0 && diff <= parseInt(m.remind);
+  });
+}
+function updateNotifBadge() {
+  const n = getNotifications().length;
+  const el = document.getElementById('bellCount');
+  el.textContent = n;
+  el.style.display = n > 0 ? 'flex' : 'none';
+}
+window.toggleNotif = function() {
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('open');
+  const notifs = getNotifications();
+  const list = document.getElementById('notifList');
+  if (notifs.length === 0) { list.innerHTML = '<div class="notif-empty">ไม่มีการแจ้งเตือน</div>'; return; }
+  const today = new Date(); today.setHours(0,0,0,0);
+  list.innerHTML = notifs.map(m => {
+    const d = new Date(m.date+'T12:00:00'); d.setHours(0,0,0,0);
+    const diff = Math.round((d - today) / 86400000);
+    const label = diff === 0 ? '⚠️ วันนี้!' : ('📌 อีก ' + diff + ' วัน');
+    return '<div class="notif-item"><div class="notif-title">'+m.title+'</div><div class="notif-sub">'+label+' · '+fmtDate(m.date,m.time)+'</div></div>';
+  }).join('');
+};
+
+// === MODAL ===
+window.openModal = function(id) {
+  editId = id || null;
+  const m = id ? meetings.find(x => x.id === id) : null;
+  document.getElementById('modalTitle').textContent = id ? '✏️ แก้ไขกำหนดการ' : '➕ เพิ่มกำหนดการประชุม';
+  document.getElementById('fDate').value = m ? m.date : '';
+  document.getElementById('fTime').value = m ? m.time : '09:00';
+  document.getElementById('fTitle').value = m ? m.title : '';
+  document.getElementById('fPlace').value = m ? m.place : '';
+  document.getElementById('fOrg').value = m ? m.org : '';
+  document.getElementById('fNote').value = m ? m.note : '';
+  document.getElementById('fRemind').value = m ? (m.remind||'3') : '3';
+  document.getElementById('modalOverlay').classList.add('open');
+};
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editId = null;
+};
+window._edit = function(id) { window.openModal(id); };
+window._del = async function(id, title) {
+  if (!confirm('ลบรายการ "' + title + '" ?')) return;
+  setSyncing();
+  await remove(ref(db, 'meetings/' + id));
+};
+
+window.saveMeeting = async function() {
+  const date = document.getElementById('fDate').value;
+  const title = document.getElementById('fTitle').value.trim();
+  if (!date || !title) { alert('กรุณากรอกวันที่และเรื่องการประชุม'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  setSyncing();
+  const entry = {
+    date, time: document.getElementById('fTime').value,
+    title, place: document.getElementById('fPlace').value.trim(),
+    org: document.getElementById('fOrg').value.trim(),
+    note: document.getElementById('fNote').value.trim(),
+    remind: document.getElementById('fRemind').value
+  };
+  try {
+    if (editId) { await update(ref(db, 'meetings/' + editId), entry); }
+    else { await push(meetingsRef, entry); }
+    window.closeModal();
+  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 บันทึก';
+};
+
+// === EXPORT ===
+window.exportCSV = function() {
+  const data = getFiltered();
+  const rows = [['ลำดับ','วันที่','เวลา','เรื่องการประชุม','สถานที่','ผู้เชิญ/หน่วยงาน','หมายเหตุ']];
+  data.forEach((m,i) => rows.push([i+1, fmtDate(m.date), m.time||'', m.title, m.place||'', m.org||'', m.note||'']));
+  const csv = '\uFEFF' + rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ตารางประชุม_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
+// === CALENDAR ===
+function renderCalendar() {
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('calTitle').textContent = MONTHS_TH[calMonth] + ' ' + (calYear+543);
+  let cells = [];
+  for (let i = firstDay-1; i >= 0; i--) cells.push({day:daysInPrev-i, other:true});
+  for (let i = 1; i <= daysInMonth; i++) cells.push({day:i, other:false});
+  while (cells.length%7!==0) cells.push({day:cells.length-daysInMonth-firstDay+2, other:true});
+  let html = DAYS_TH.map(d=>'<div class="cal-head">'+d+'</div>').join('');
+  cells.forEach(c => {
+    const ds = c.other ? null : (calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(c.day).padStart(2,'0'));
+    const isToday = ds && (()=>{ const x=new Date(ds+'T12:00:00'); x.setHours(0,0,0,0); return x.getTime()===today.getTime(); })();
+    const evs = ds ? meetings.filter(m=>m.date===ds) : [];
+    html += '<div class="cal-cell'+(c.other?' other-month':'')+(isToday?' today-cell':'')+'">'+
+      '<div class="cal-date">'+c.day+'</div>'+
+      evs.map(m=>'<div class="cal-event" onclick="window._edit(\''+m.id+'\')" title="'+m.title+'">'+(m.time?m.time.slice(0,5)+' ':'')+m.title+'</div>').join('')+
+      '</div>';
+  });
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+window.changeMonth = function(dir) {
+  calMonth += dir;
+  if (calMonth>11){calMonth=0;calYear++;}
+  if (calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+};
+
+window.switchTab = function(view, el) {
+  currentView = view;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('listView').style.display = view==='list'?'':'none';
+  document.getElementById('calendarView').style.display = view==='calendar'?'':'none';
+  if (view==='calendar') renderCalendar();
+};
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('.bell-badge'))
+    panel.classList.remove('open');
+});
+</script>
+</body>
+</html>
